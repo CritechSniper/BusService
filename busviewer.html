@@ -12,51 +12,86 @@
   <main>
     <div class="maincontent">
       <div class="busDetails" style="--bus-name: 'Loading...';">
-        BUS <span id="busNo"></span>
+        BUSES in <span id="busNo"></span>
       </div>
       <div class="stops-container">
-        <details>
-          <summary>Bus Stop 1</summary>
-          <div class="stop-info">
-            <div class="stat-box"><span>Boarding</span><b>5</b></div>
-            <div class="stat-box"><span>Departing</span><b>3</b></div>
-            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
-          </div>
-        </details>
-
-        <details>
-          <summary>Bus Stop 2</summary>
-          <div class="stop-info">
-            <div class="stat-box"><span>Boarding</span><b>12</b></div>
-            <div class="stat-box"><span>Departing</span><b>1</b></div>
-            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
-          </div>
-        </details>
-
-        <details>
-          <summary>Bus Stop 3</summary>
-          <div class="stop-info">
-            <div class="stat-box"><span>Boarding</span><b>0</b></div>
-            <div class="stat-box"><span>Departing</span><b>8</b></div>
-            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
-          </div>
-        </details>
+        
       </div>
     </div>
   </main>
 
   <div class="bottom-sheet">
     <div class="sheet-content">
-      <div class="arrival-label">
+      <!-- <div class="arrival-label">
         <span>Estimated Arrival</span>
         <strong id="copybusDet">In 5 mins</strong>
       </div>
-      <button class="refresh-btn">Live Track</button>
+      <button class="refresh-btn">Live Track</button> -->
     </div>
   </div>
 
   <script>
-    document.querySelector('.busDetails').style.setProperty('--bus-name', "'2002'");
+    document.querySelector('.busDetails').style.setProperty('--bus-name', "'ABU DHABI'");
+  </script>
+  <script type="module">
+    /*
+      NOTE: 
+      THIS IS A TESTING WEBSITE AND ALL DATA IS STORED LOCALLY 
+    */
+    const buses = [
+      {
+        number: '001',
+        seatnumbers: 45
+      },{
+        number: '002',
+        seatnumbers: 45
+      }, {
+        number: '003',
+        seatnumbers: 45
+      }
+    ]
+    function getRandomStop() {
+      const stops = [
+        "ADNEC",
+        "Abudhabi Airport",
+        "Delma Mall",
+        "Khalifa University Gate",
+        "Mina Port",
+        "Zayed Port",
+        "FUN CITY",
+        "Heritage Village",
+        "Tech Park",
+        "Sheik Zayed Grand Mosque",
+        "Corniche Road",
+        "Abudhabi Bus Depot"
+      ];
+
+      const index = Math.floor(Math.random() * stops.length);
+      return stops[index];
+    }
+    function getRandomETA() {
+      const mins = Math.floor(Math.random() * 15) + 1; 
+      return `In ${mins} mins`;
+    }
+    buses.forEach( (b) => {
+      b.eta = getRandomETA();
+      b.nextStop = getRandomStop();
+    })
+    const container = document.querySelector(".stops-container");
+    buses.forEach((b,i) => {
+      const el = 
+          `
+          <details>
+          <summary>Bus #${b.number}</summary>
+            <div class="stop-info">
+              <div class="stat-box center"><span>Capacity</span><b>${b.seatnumbers}</b></div>
+              <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
+              <div class="stat-box center"><span>Next stop</span><b>${b.nextStop}</b></div>
+            </div>
+          </details>
+        `
+      container.innerHTML+=el
+    });
   </script>
 </body>
 
