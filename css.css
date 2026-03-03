@@ -1,0 +1,277 @@
+:root {
+    --base-clr: #0f1016;
+    --card-bg: #1a1c26;
+    --line-clr: #2d2f3f;
+    --accent-clr: #7c81ff;
+    --text-main: #ffffff;
+    --text-sub: #9499b3;
+    --live-red: #ff4757;
+}
+
+/* 1. Basic Mobile Reset & Layout */
+body {
+    background-color: var(--base-clr);
+    color: var(--text-main);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 15px;
+    padding-bottom: 120px;
+    /* Crucial: Prevents bottom bar from overlapping content */
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+}
+
+main {
+    width: 100%;
+    max-width: 450px;
+}
+
+.maincontent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 2. Bus Header (Hero Section) */
+/* 2. Bus Header (Hero Section) */
+.busDetails {
+    background: linear-gradient(135deg, var(--accent-clr), #a2a6ff);
+    color: white;
+    padding: 40px 20px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 8px 25px rgba(124, 129, 255, 0.25);
+    margin-bottom: 10px;
+
+    /* NEW: This is required to keep the big number inside the card */
+    position: relative;
+    overflow: hidden;
+}
+
+#busNo::before {
+    content: var(--bus-name);
+}
+
+/* The Large Blended Number in the background */
+.busDetails::before {
+    content: var(--bus-name);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    font-size: 180px;
+    font-weight: 900;
+
+    color: rgba(255, 255, 255, 0.15);
+    pointer-events: none;
+    z-index: 0;
+
+    letter-spacing: -10px;
+    line-height: 1;
+}
+
+/* Ensure the actual text stays on top */
+.busDetails span,
+.busDetails {
+    position: relative;
+    z-index: 1;
+}
+
+.busDetails span {
+    display: block;
+    font-size: 54px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /* Makes the main number pop */
+}
+
+/* 3. Interactive Bus Stop Cards */
+details {
+    background: #242636;
+    margin: 8px 0;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.2s ease, background 0.3s ease;
+    border: 1px solid var(--line-clr);
+}
+
+details:active {
+    transform: scale(0.98);
+    /* Haptic-like click feel */
+}
+
+details[open] {
+    background: #2d3045;
+}
+
+summary {
+    list-style: none;
+    padding: 18px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Custom Animated Arrow */
+summary::after {
+    content: '›';
+    font-size: 28px;
+    color: var(--accent-clr);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    line-height: 0;
+}
+
+details[open] summary::after {
+    transform: rotate(90deg);
+}
+
+/* 4. Details Content & Animations */
+.stop-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    /* flex-grow: 1; */
+    /* margin: auto; */
+    gap: 12px;
+    padding: 0 18px 18px 18px;
+    animation: slideInUp 0.35s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stat-box {
+    background: var(--base-clr);
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.stat-box span {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-sub);
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.stat-box b {
+    font-size: 24px;
+    color: var(--accent-clr);
+}
+
+/* 5. Sticky Bottom "Payment Style" Sheet */
+.bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(26, 28, 38, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--line-clr);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.sheet-content {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.arrival-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.arrival-label span {
+    font-size: 12px;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Live Pulse Dot */
+.arrival-label span::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background-color: var(--live-red);
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.5);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.arrival-label strong {
+    font-size: 24px;
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.refresh-btn {
+    background: var(--accent-clr);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(124, 129, 255, 0.3);
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.refresh-btn:active {
+    background-color: #6b70ff;
+    transform: translateY(2px);
+}
+.center {
+    grid-column: 1 / -1;
+}

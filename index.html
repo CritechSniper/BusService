@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Station Terminal</title>
+    <style>
+        :root {
+            --bg-main: #f2f4f7;
+            --card-bg: #ffffff;
+            --accent-1: #4a54f1;
+            --accent-2: #2ecc71;
+            --accent-3: #e67e22;
+            --text-main: #1a1c22;
+            --text-sub: #70757a;
+            --live-red: #ff4757;
+            --border-outer: #dcdde1;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 3vh;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            height: 8vh;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1vw;
+            margin-bottom: 2vh;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        #clock {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--text-sub);
+        }
+
+        .board-container {
+            display: flex;
+            gap: 30px;
+            flex: 1;
+            height: 84vh;
+        }
+
+        /* Column Container - Mimicking a vertical screen/kiosk */
+        .bus-column {
+            flex: 1;
+            background: #e9ecef;
+            border-radius: 40px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border: 8px solid #dee2e6;
+            /* The physical-looking frame */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 2. Bus Header (RESTORING BACKGROUND NUMBER & BORDER) */
+        .busDetails {
+            color: white;
+            padding: 50px 20px;
+            border-radius: 28px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Background Large Number Restored */
+        .busDetails::before {
+            content: attr(data-bus);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 150px;
+            font-weight: 900;
+            color: rgba(255, 255, 255, 0.18);
+            z-index: 0;
+            letter-spacing: -8px;
+        }
+
+        .busDetails span {
+            position: relative;
+            z-index: 1;
+            display: block;
+            font-size: 54px;
+            font-weight: 800;
+            text-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Color Variants for Headers */
+        .col-1 .busDetails {
+            background: linear-gradient(135deg, var(--accent-1), #7c81ff);
+        }
+
+        .col-2 .busDetails {
+            background: linear-gradient(135deg, var(--accent-2), #58d68d);
+        }
+
+        .col-3 .busDetails {
+            background: linear-gradient(135deg, var(--accent-3), #f39c12);
+        }
+
+        /* 3. Stop Cards (RESTORING SIDE BORDER COLOR) */
+        .stop-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            border-left: 10px solid transparent;
+            /* Placeholder for dynamic color */
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Applying side borders based on column */
+        .col-1 .stop-card {
+            border-left-color: var(--accent-1);
+        }
+
+        .col-2 .stop-card {
+            border-left-color: var(--accent-2);
+        }
+
+        .col-3 .stop-card {
+            border-left-color: var(--accent-3);
+        }
+
+        .stop-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .stop-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: var(--bg-main);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-box span {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-sub);
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-box b {
+            font-size: 26px;
+            color: var(--text-main);
+        }
+
+        /* 4. ETA & PROGRESS BAR */
+        .arrival-footer {
+            margin-top: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 28px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        }
+
+        .arrival-footer span {
+            display: flex;
+            /* Changed to flex for alignment */
+            justify-content: center;
+            /* Centers the content horizontally */
+            align-items: center;
+            /* Centers the dot and text vertically */
+            font-size: 14px;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+
+        .arrival-footer strong {
+            font-size: 36px;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 15px;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 14px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+            transition: width 1s linear;
+        }
+
+        /* Animations & Colors for Progress */
+        :root {
+            --col-3: attr(data-time);
+        }
+        .col-1 .progress-fill {
+            background: var(--accent-1);
+            animation: grow 300s forwards;
+        }
+
+        .col-2 .progress-fill {
+            background: var(--accent-2);
+            animation: grow 300 forwards;
+        }
+
+        .col-3 .progress-fill {
+            background: var(--accent-3);
+            animation: grow var(--col-3) forwards;
+        }
+
+        @keyframes grow {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+
+        .pulse {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--live-red);
+            border-radius: 50%;
+            margin-right: 10px;
+            /* Space between dot and "ARRIVED" */
+            animation: blink 1.5s infinite;
+            flex-shrink: 0;
+            /* Prevents the dot from squishing */
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Platform Departures</h1>
+        <div id="clock">12:00</div>
+    </div>
+
+    <div class="board-container">
+
+        <div class="bus-column col-1">
+            <div class="busDetails" data-bus="2002">
+                <span>BUS 2002</span>
+            </div>
+
+            <div class="stop-card">
+                <span class="stop-name">Grand Avenue</span>
+                <div class="stop-info">
+                    <div class="stat-box"><span>Boarding</span><b>5</b></div>
+                    <div class="stat-box"><span>Depart</span><b>3</b></div>
+                </div>
+            </div>
+
+            <div class="arrival-footer">
+                <span><span class="pulse"></span> Arriving Now</span>
+                <strong>5 MINS</strong>
+                <div class="progress-track">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bus-column col-2">
+            <div class="busDetails" data-bus="405">
+                <span>BUS 405</span>
+            </div>
+
+            <div class="stop-card">
+                <span class="stop-name">Hospital Loop</span>
+                <div class="stop-info">
+                    <div class="stat-box"><span>Boarding</span><b>11</b></div>
+                    <div class="stat-box"><span>Depart</span><b>2</b></div>
+                </div>
+            </div>
+
+            <div class="arrival-footer">
+                <span><span class="pulse"></span> Arriving Now</span>
+                <strong>5 MINS</strong>
+                <div class="progress-track">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bus-column col-3">
+            <div class="busDetails" data-bus="10B">
+                <span>BUS 10-B</span>
+            </div>
+
+            <div class="stop-card">
+                <span class="stop-name">University Pkwy</span>
+                <div class="stop-info">
+                    <div class="stat-box"><span>Boarding</span><b>0</b></div>
+                    <div class="stat-box"><span>Depart</span><b>14</b></div>
+                </div>
+            </div>
+
+            <div class="arrival-footer">
+                <span><span class="pulse"></span> Arriving Now</span>
+                <strong>5 MINS</strong>
+                <div class="progress-track">
+                    <div class="progress-fill" data-time="104s"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bus Tracker</title>
+  <link rel="stylesheet" href="css.css">
+</head>
+
+<body>
+  <main>
+    <div class="maincontent">
+      <div class="busDetails" style="--bus-name: 'Loading...';">
+        BUS <span id="busNo"></span>
+      </div>
+      <div class="stops-container">
+        <details>
+          <summary>Bus Stop 1</summary>
+          <div class="stop-info">
+            <div class="stat-box"><span>Boarding</span><b>5</b></div>
+            <div class="stat-box"><span>Departing</span><b>3</b></div>
+            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Bus Stop 2</summary>
+          <div class="stop-info">
+            <div class="stat-box"><span>Boarding</span><b>12</b></div>
+            <div class="stat-box"><span>Departing</span><b>1</b></div>
+            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Bus Stop 3</summary>
+          <div class="stop-info">
+            <div class="stat-box"><span>Boarding</span><b>0</b></div>
+            <div class="stat-box"><span>Departing</span><b>8</b></div>
+            <div class="stat-box center"><span>Capacity</span><b>42</b></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-sheet">
+    <div class="sheet-content">
+      <div class="arrival-label">
+        <span>Estimated Arrival</span>
+        <strong id="copybusDet">In 5 mins</strong>
+      </div>
+      <button class="refresh-btn">Live Track</button>
+    </div>
+  </div>
+
+  <script>
+    document.querySelector('.busDetails').style.setProperty('--bus-name', "'2002'");
+  </script>
+</body>
+
+</html>
