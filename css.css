@@ -275,3 +275,24 @@ details[open] summary::after {
 .center {
     grid-column: 1 / -1;
 }
+.papa-div {
+    display: flex;
+    column-gap: 5px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.popup-btn {
+    background: var(--accent-clr);
+    color: white;
+    border: none;
+    padding: 7px;
+    border-radius: 5px;
+    box-shadow: 0 4px 15px rgba(124, 129, 255, 0.3);
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+.popup-btn:hover {
+    background-color: #6b70ff;
+    transform: translateY(2px);
+}

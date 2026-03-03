@@ -1,6 +1,0 @@
-/* 
-  Database: 
-  Bus (number)
-  |
-  |-- Capacity
-*/

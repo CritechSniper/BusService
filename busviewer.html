@@ -34,65 +34,84 @@
     document.querySelector('.busDetails').style.setProperty('--bus-name', "'ABU DHABI'");
   </script>
   <script type="module">
-    /*
-      NOTE: 
-      THIS IS A TESTING WEBSITE AND ALL DATA IS STORED LOCALLY 
-    */
-    const buses = [
-      {
-        number: '001',
-        seatnumbers: 45
-      },{
-        number: '002',
-        seatnumbers: 45
-      }, {
-        number: '003',
-        seatnumbers: 45
-      }
-    ]
-    function getRandomStop() {
-      const stops = [
-        "ADNEC",
-        "Abudhabi Airport",
-        "Delma Mall",
-        "Khalifa University Gate",
-        "Mina Port",
-        "Zayed Port",
-        "FUN CITY",
-        "Heritage Village",
-        "Tech Park",
-        "Sheik Zayed Grand Mosque",
-        "Corniche Road",
-        "Abudhabi Bus Depot"
-      ];
+    const latest = [];
+  const buses = [
+    { number: '001', seatnumbers: 45 },
+    { number: '002', seatnumbers: 45 },
+    { number: '003', seatnumbers: 45 }
+  ];
 
-      const index = Math.floor(Math.random() * stops.length);
-      return stops[index];
-    }
-    function getRandomETA() {
-      const mins = Math.floor(Math.random() * 15) + 1; 
-      return `In ${mins} mins`;
-    }
-    buses.forEach( (b) => {
-      b.eta = getRandomETA();
-      b.nextStop = getRandomStop();
-    })
-    const container = document.querySelector(".stops-container");
-    buses.forEach((b,i) => {
-      const el = 
-          `
-          <details>
-          <summary>Bus #${b.number}</summary>
-            <div class="stop-info">
-              <div class="stat-box center"><span>Capacity</span><b>${b.seatnumbers}</b></div>
-              <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
-              <div class="stat-box center"><span>Next stop</span><b>${b.nextStop}</b></div>
-            </div>
-          </details>
-        `
-      container.innerHTML+=el
+  function getRandomStop() {
+    const stops = ["ADNEC", "Abudhabi Airport", "Delma Mall", "Khalifa University Gate", "Mina Port", "Zayed Port", "FUN CITY", "Heritage Village", "Tech Park", "Sheik Zayed Grand Mosque", "Corniche Road", "Abudhabi Bus Depot"];
+    return stops[Math.floor(Math.random() * stops.length)];
+  }
+
+  function getRandomETA() {
+    return `In ${Math.floor(Math.random() * 15) + 1} mins`;
+  }
+
+  // Initialize data
+  buses.forEach((b) => {
+    b.eta = getRandomETA();
+    b.nextStop = getRandomStop();
+  });
+
+  const container = document.querySelector(".stops-container");
+
+  // Function to draw the UI
+  function renderBuses() {
+    container.innerHTML = ""; // Clear existing content
+
+    buses.forEach((b) => {
+      const details = document.createElement('details');
+      if (b.number === latest[0]) details.setAttribute("open",true)
+      latest.splice(1,latest.length)
+      details.innerHTML = `
+        <summary>Bus #${b.number}</summary>
+        <div class="stop-info">
+          <div class="stat-box center"><span>No.of seats available</span><b>${b.seatnumbers}</b></div>
+          <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
+          <div class="stat-box center"><span>Next stop</span><b>${b.nextStop}</b></div>
+        </div>
+        <div class="papa-div">
+          <button class="popup-btn book" data-id="${b.number}">Book</button>
+          <button class="popup-btn withdraw" data-id="${b.number}">Withdraw</button>
+        </div>
+      `;
+      container.appendChild(details);
     });
-  </script>
+
+    // Re-attach event listeners after rendering
+    attachEventListeners();
+  }
+
+  function attachEventListeners() {
+    document.querySelectorAll('.popup-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        const busId = btn.getAttribute('data-id');
+        const bus = buses.find(b => b.number === busId);
+        latest.push(busId)
+        if (btn.classList.contains('book')) {
+          if (bus.seatnumbers > 0) {
+            bus.seatnumbers--;
+            renderBuses(); // Refresh UI
+          } else {
+            alert("Bus full!");
+          }
+        } else if (btn.classList.contains('withdraw')) {
+          // Assuming 45 is the max capacity
+          if (bus.seatnumbers < 45) {
+            bus.seatnumbers++;
+            renderBuses(); // Refresh UI
+          }
+        }
+      };
+    });
+  }
+
+  // Initial Render
+  renderBuses();
+</script>
 </body>
 
 </html>
