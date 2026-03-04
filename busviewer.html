@@ -5,17 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bus Tracker</title>
-  <link rel="stylesheet" href="css.css">
+  <link rel="stylesheet" href="busviewer.css">
 </head>
 
 <body>
   <main>
     <div class="maincontent">
       <div class="busDetails" style="--bus-name: 'Loading...';">
-        BUSES in <span id="busNo"></span>
+        BUSES in <span id="busLocation"></span>
       </div>
       <div class="stops-container">
-        
+
       </div>
     </div>
   </main>
@@ -32,75 +32,93 @@
 
   <script>
     document.querySelector('.busDetails').style.setProperty('--bus-name', "'ABU DHABI'");
+
   </script>
   <script type="module">
-  const buses = [
-    { number: '001', seatnumbers: 45, maxSeats: 45 },
-    { number: '002', seatnumbers: 45, maxSeats: 45 },
-    { number: '003', seatnumbers: 45, maxSeats: 45 }
-  ];
+    const buses = [
+      { number: '001', seatnumbers: 9, maxSeats: 45 },
+      { number: '002', seatnumbers: 45, maxSeats: 45 },
+      { number: '003', seatnumbers: 45, maxSeats: 45 }
+    ];
 
-  let lastOpenedId = null; // Track which bus was last interacted with
+    let lastOpenedId = null;
+    let userBookedBusId = null; // Track if the user has a booking and for which bus
 
-  function getRandomStop() {
-    const stops = ["ADNEC", "Abudhabi Airport", "Delma Mall", "Khalifa University Gate", "Mina Port", "Zayed Port", "FUN CITY", "Heritage Village", "Tech Park", "Sheik Zayed Grand Mosque", "Corniche Road", "Abudhabi Bus Depot"];
-    return stops[Math.floor(Math.random() * stops.length)];
-  }
+    function getRandomStop() {
+      const stops = ["ADNEC", "Abudhabi Airport", "Delma Mall", "Khalifa University Gate", "Mina Port", "Zayed Port", "FUN CITY", "Heritage Village", "Tech Park", "Sheik Zayed Grand Mosque", "Corniche Road", "Abudhabi Bus Depot"];
+      return stops[Math.floor(Math.random() * stops.length)];
+    }
 
-  function getRandomETA() {
-    return `In ${Math.floor(Math.random() * 15) + 1} mins`;
-  }
+    function getRandomETA() {
+      return `In ${Math.floor(Math.random() * 15) + 1} mins`;
+    }
 
-  // Initialize static data
-  buses.forEach((b) => {
-    b.eta = getRandomETA();
-    b.nextStop = getRandomStop();
-  });
+    buses.forEach((b) => {
+      b.eta = getRandomETA();
+      b.nextStop = getRandomStop();
+    });
 
-  const container = document.querySelector(".stops-container");
+    const container = document.querySelector(".stops-container");
 
-  function renderBuses() {
-    container.innerHTML = buses.map(b => `
+    function renderBuses() {
+      container.innerHTML = buses.map(b => {
+        const isLow = b.seatnumbers <= 10;
+        const statBoxClass = isLow ? "stat-box center low-seats" : "stat-box center";
+
+        // Logic for button visibility
+        const hasBookingOnThisBus = userBookedBusId === b.number;
+        const canBookAnyBus = userBookedBusId === null;
+
+        return `
       <details ${b.number === lastOpenedId ? "open" : ""}>
         <summary>Bus #${b.number}</summary>
         <div class="stop-info">
-          <div class="stat-box center"><span>Available Seats</span><b>${b.seatnumbers}</b></div>
+          <div class="${statBoxClass}">
+            <span>Available Seats</span>
+            <b>${b.seatnumbers}</b>
+          </div>
           <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
           <div class="stat-box center"><span>Next stop</span><b>${b.nextStop}</b></div>
         </div>
-        <div class="papa-div">
-          <button class="popup-btn book" data-id="${b.number}">Book</button>
-          <button class="popup-btn withdraw" data-id="${b.number}">Withdraw</button>
+        <div class="path-div">
+          ${canBookAnyBus ? `<button class="popup-btn book" data-id="${b.number}">Book</button>` : ''}
+          ${hasBookingOnThisBus ? `<button class="popup-btn withdraw" data-id="${b.number}">Withdraw My Booking</button>` : ''}
+          ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>You already have a booking elsewhere</small>` : ''}
         </div>
       </details>
-    `).join('');
-  }
-
-  container.addEventListener('click', (e) => {
-    const btn = e.target.closest('.popup-btn');
-    if (!btn) return;
-
-    const busId = btn.getAttribute('data-id');
-    const bus = buses.find(b => b.number === busId);
-    lastOpenedId = busId; 
-
-    if (btn.classList.contains('book')) {
-      if (bus.seatnumbers > 0) {
-        bus.seatnumbers--;
-        renderBuses();
-      } else {
-        alert("Bus full!");
-      }
-    } else if (btn.classList.contains('withdraw')) {
-      if (bus.seatnumbers < bus.maxSeats) {
-        bus.seatnumbers++;
-        renderBuses();
-      }
+    `;
+      }).join('');
     }
-  });
 
-  renderBuses();
-</script>
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('.popup-btn');
+      if (!btn) return;
+
+      const busId = btn.getAttribute('data-id');
+      const bus = buses.find(b => b.number === busId);
+      lastOpenedId = busId;
+
+      if (btn.classList.contains('book')) {
+        if (userBookedBusId === null) {
+          if (bus.seatnumbers > 0) {
+            bus.seatnumbers--;
+            userBookedBusId = busId; // Set the booking
+            renderBuses();
+          } else {
+            alert("Bus full!");
+          }
+        }
+      } else if (btn.classList.contains('withdraw')) {
+        if (userBookedBusId === busId) {
+          bus.seatnumbers++;
+          userBookedBusId = null; // Clear the booking
+          renderBuses();
+        }
+      }
+    });
+
+    renderBuses();
+  </script>
 </body>
 
 </html>
