@@ -59,7 +59,6 @@
     });
 
     const container = document.querySelector(".stops-container");
-
     function renderBuses() {
       container.innerHTML = buses.map(b => {
         const isLow = b.seatnumbers <= 10;
@@ -68,7 +67,6 @@
         // Logic for button visibility
         const hasBookingOnThisBus = userBookedBusId === b.number;
         const canBookAnyBus = userBookedBusId === null;
-
         return `
       <details ${b.number === lastOpenedId ? "open" : ""}>
         <summary>Bus #${b.number}</summary>
@@ -83,7 +81,7 @@
         <div class="path-div">
           ${canBookAnyBus ? `<button class="popup-btn book" data-id="${b.number}">Book</button>` : ''}
           ${hasBookingOnThisBus ? `<button class="popup-btn withdraw" data-id="${b.number}">Withdraw My Booking</button>` : ''}
-          ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>You already have a booking elsewhere</small>` : ''}
+          ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>You already have a booking in Bus #${userBookedBusId}</small>` : ''}
         </div>
       </details>
     `;

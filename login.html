@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Test</title>
+</head>
+<body>
+    <h2>Firebase Database</h2>
+    <input type="text" id="phone" placeholder="Phone Number">
+    <input type="password" id="password" placeholder="Password">
+    <br><br>
+    <button id="saveBtn">Save Data</button>
+    <button id="getBtn">Get Data</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTFjGPz3pPbXDqLxusue9VaQR-Msr_oTk",
+            authDomain: "justtest-5f40e.firebaseapp.com",
+            databaseURL: "https://justtest-5f40e-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "justtest-5f40e",
+            storageBucket: "justtest-5f40e.firebasestorage.app",
+            messagingSenderId: "482057327016",
+            appId: "1:482057327016:web:299970269b20d58122cd9d",
+            measurementId: "G-9V7382JDQ8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // UI elements
+        const phoneInput = document.getElementById('phone');
+        const passInput = document.getElementById('password');
+
+        // Save logic
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            set(ref(db, 'users/' + phoneInput.value), { password: passInput.value })
+            .then(() => alert("Saved!"))
+            .catch(err => alert("Error: " + err));
+        });
+
+        // Get logic
+        document.getElementById('getBtn').addEventListener('click', () => {
+            get(child(ref(db), `users/${phoneInput.value}`))
+            .then(s => {
+                if(s.exists()) {
+                  if (passInput===s.password) {
+                    localStorage.setItem("sampleAppUser", {user: phoneInput, password: s.password});
+                  }
+                }
+                else alert("User not found");
+            });
+        });
+    </script>
+</body>
+</html>
