@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Firebase Test</title>
+    <link rel="stylesheet" href="busviewer.css">
 </head>
 <body>
-    <h2>Firebase Database</h2>
-    <input type="text" id="phone" placeholder="Phone Number">
-    <input type="password" id="password" placeholder="Password">
-    <br><br>
-    <button id="saveBtn">Save Data</button>
-    <button id="getBtn">Get Data</button>
+    <div>
+      <h2>Login</h2>
+      <input type="text" id="phone" placeholder="Phone Number">
+      <br>
+      <input type="password" id="password" placeholder="Password">
+      <br>
+      <button id="getBtn">Login</button>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -33,22 +36,14 @@
         // UI elements
         const phoneInput = document.getElementById('phone');
         const passInput = document.getElementById('password');
-
-        // Save logic
-        document.getElementById('saveBtn').addEventListener('click', () => {
-            set(ref(db, 'users/' + phoneInput.value), { password: passInput.value })
-            .then(() => alert("Saved!"))
-            .catch(err => alert("Error: " + err));
-        });
-
         // Get logic
         document.getElementById('getBtn').addEventListener('click', () => {
             get(child(ref(db), `users/${phoneInput.value}`))
             .then(s => {
                 if(s.exists()) {
-                  if (passInput===s.password) {
-                    localStorage.setItem("sampleAppUser", {user: phoneInput, password: s.password});
-                  }
+                  const data = s.val();
+                  localStorage.setItem("user", JSON.stringify(data));
+                  window.location.href="busviewer.html"
                 }
                 else alert("User not found");
             });

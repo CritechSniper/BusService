@@ -15,7 +15,7 @@
         BUSES in <span id="busLocation"></span>
       </div>
       <div class="stops-container">
-
+        Loading...
       </div>
     </div>
   </main>
@@ -35,87 +35,86 @@
 
   </script>
   <script type="module">
-    const buses = [
-      { number: '001', seatnumbers: 9, maxSeats: 45 },
-      { number: '002', seatnumbers: 45, maxSeats: 45 },
-      { number: '003', seatnumbers: 45, maxSeats: 45 }
-    ];
+    import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAllBuses, firebaseConfig } from './login.js'
 
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    console.log("ETA will return undefined due to the main coder not adding a specific function to his backend server")
+    let buses = [];
+    console.log(await getAllBuses())
     let lastOpenedId = null;
-    let userBookedBusId = null; // Track if the user has a booking and for which bus
-
-    function getRandomStop() {
-      const stops = ["ADNEC", "Abudhabi Airport", "Delma Mall", "Khalifa University Gate", "Mina Port", "Zayed Port", "FUN CITY", "Heritage Village", "Tech Park", "Sheik Zayed Grand Mosque", "Corniche Road", "Abudhabi Bus Depot"];
-      return stops[Math.floor(Math.random() * stops.length)];
-    }
-
-    function getRandomETA() {
-      return `In ${Math.floor(Math.random() * 15) + 1} mins`;
-    }
-
-    buses.forEach((b) => {
-      b.eta = getRandomETA();
-      b.nextStop = getRandomStop();
+    let userBookedBusId = null;
+    const container = document.querySelector(".stops-container");
+    onValue(ref(db, 'buses'), async (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+      
+      // Convert object to array and keep IDs
+      buses = Object.keys(data).map(key => ({
+        ...data[key],
+        number: key
+      }));
+      
+      await renderBuses(); // Automatically re-renders the UI with fresh data
     });
 
-    const container = document.querySelector(".stops-container");
-    function renderBuses() {
+    async function renderBuses() {
+      const buses = await getAllBuses()
+      container.innerHTML = ``
       container.innerHTML = buses.map(b => {
         const isLow = b.seatnumbers <= 10;
         const statBoxClass = isLow ? "stat-box center low-seats" : "stat-box center";
-
-        // Logic for button visibility
         const hasBookingOnThisBus = userBookedBusId === b.number;
         const canBookAnyBus = userBookedBusId === null;
+
         return `
-      <details ${b.number === lastOpenedId ? "open" : ""}>
-        <summary>Bus #${b.number}</summary>
-        <div class="stop-info">
-          <div class="${statBoxClass}">
-            <span>Available Seats</span>
-            <b>${b.seatnumbers}</b>
-          </div>
-          <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
-          <div class="stat-box center"><span>Next stop</span><b>${b.nextStop}</b></div>
-        </div>
-        <div class="path-div">
-          ${canBookAnyBus ? `<button class="popup-btn book" data-id="${b.number}">Book</button>` : ''}
-          ${hasBookingOnThisBus ? `<button class="popup-btn withdraw" data-id="${b.number}">Withdraw My Booking</button>` : ''}
-          ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>You already have a booking in Bus #${userBookedBusId}</small>` : ''}
-        </div>
-      </details>
-    `;
+          <details ${b.number === lastOpenedId ? "open" : ""}>
+            <summary>Bus #${b.number}</summary>
+            <div class="stop-info">
+              <div class="${statBoxClass}"><span>Available Seats</span><b>${b.seatnumbers}</b></div>
+              <div class="stat-box center"><span>ETA</span><b>${b.eta}</b></div>
+              <div class="stat-box center"><span>Next stop</span><b>${b?.nextStop}</b></div>
+            </div>
+            <div class="path-div">
+              ${canBookAnyBus ? `<button class="popup-btn book" data-id="${b.number}">Book</button>` : ''}
+              ${hasBookingOnThisBus ? `<button class="popup-btn withdraw" data-id="${b.number}">Withdraw My Booking</button>` : ''}
+              ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>You already have a booking in Bus #${userBookedBusId}</small>` : ''}
+            </div>
+          </details>`;
       }).join('');
     }
 
-    container.addEventListener('click', (e) => {
+    // 2. TRANSACTION LOGIC: Increments/Decrements directly in DB
+    async function updateBusSeats(busId, increment) {
+      const busRef = ref(db, `buses/${busId}/seatnumbers`);
+      await runTransaction(busRef, (current) => {
+        if (current === null) return 0;
+        const next = current + increment;
+        return next < 0 ? 0 : next;
+      });
+    }
+
+    container.addEventListener('click', async (e) => {
       const btn = e.target.closest('.popup-btn');
       if (!btn) return;
 
       const busId = btn.getAttribute('data-id');
-      const bus = buses.find(b => b.number === busId);
       lastOpenedId = busId;
 
       if (btn.classList.contains('book')) {
         if (userBookedBusId === null) {
-          if (bus.seatnumbers > 0) {
-            bus.seatnumbers--;
-            userBookedBusId = busId; // Set the booking
-            renderBuses();
-          } else {
-            alert("Bus full!");
-          }
+          userBookedBusId = busId;
+          await updateBusSeats(busId, -1);
         }
       } else if (btn.classList.contains('withdraw')) {
         if (userBookedBusId === busId) {
-          bus.seatnumbers++;
-          userBookedBusId = null; // Clear the booking
-          renderBuses();
+          userBookedBusId = null;
+          await updateBusSeats(busId, 1);
         }
       }
     });
-
-    renderBuses();
   </script>
 </body>
 

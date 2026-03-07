@@ -347,3 +347,17 @@ details[open] summary::after {
         box-shadow: 0 0 20px rgba(255, 0, 0, 1);
     }
 }
+
+input {
+    height: fit-content;
+    padding: 7px;
+}
+#getBtn {
+    height: fit-content;
+    width: fit-content;
+    padding: 7px;
+    border-radius: 5%;
+}
+.container {
+    
+}
