@@ -15,7 +15,8 @@ export async function getAllBuses() {
       number: b.toString(),
       seatnumbers: stuff[b]?.seatnumbers,
       maxSeats: stuff[b]?.maxSeats,
-      nextStop: stuff[b]?.destination
+      nextStop: stuff[b]?.destination,
+      eta: stuff[b]?.eta,
     })
   }
   return arr; 
