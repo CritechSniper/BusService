@@ -75,7 +75,7 @@
                 timeStr = `${mins}m ${secs.toString().padStart(2, '0')}s`;
             }
             const a = (new Date(bus?.eta)).toLocaleTimeString().split(" ");
-            const timyThing = `${a[0].split(":")[0]}:${a[0].split(":")[1]} ${a[1]}`
+            const timyThing = `${a[0].split(":")[0]}:${a[0].split(":")[1]}${a[1] ? ` ${a[1]}` : ""}`
             return `
                 <div class="bus-column ${i===0?"col-1":i===1?"col-2":"col-3"}">
                     <div class="busDetails">
