@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bus Tracker</title>
+  <link rel="stylesheet" href="busviewer.css">
+</head>
+
+<body>
+  <main>
+    <div class="maincontent">
+      <div class="busDetails" style="--bus-name: 'Loading...';">
+        BUSES in <span id="busLocation"></span>
+      </div>
+      <div class="stops-container">
+        Loading...
+      </div>
+    </div>
+  </main>
+
+  <div class="bottom-sheet">
+    <div class="sheet-content">
+      <!-- <div class="arrival-label">
+        <span>Estimated Arrival</span>
+        <strong id="copybusDet">In 5 mins</strong>
+      </div>
+      <button class="refresh-btn">Live Track</button> -->
+    </div>
+  </div>
+
+  <script>
+    document.querySelector('.busDetails').style.setProperty('--bus-name', "'ABU DHABI'");
+
+  </script>
+  <script type="module">
+    import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAllBuses, firebaseConfig } from './login.js'
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const container = document.querySelector(".stops-container");
+
+    // --- FIX: Define and Load Persistent Data ---
+    
+    // 1. Handle Last Opened Detail
+    const savedState = localStorage.getItem("lastopened");
+    let lastOpenedId = savedState ? JSON.parse(savedState).lo : null;
+
+    // 2. Handle User Booking (persistent across refreshes)
+    let userBookedBusId = localStorage.getItem("userBookedBusId") || null;
+
+    onValue(ref(db, 'buses'), async (snapshot) => {
+      await renderBuses();
+    });
+
+    async function renderBuses() {
+      const buses = await getAllBuses();
+      container.innerHTML = buses.map(b => {
+        const isLow = b.seatnumbers <= 10;
+        const statBoxClass = isLow ? "stat-box center low-seats" : "stat-box center";
+        
+        // Strict comparison (ensure both are strings or both numbers)
+        const hasBookingOnThisBus = String(userBookedBusId) === String(b.number);
+        const canBookAnyBus = userBookedBusId === null;
+
+        const etaDate = new Date(b.eta);
+        const a = etaDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const isOpen = String(b.number) === String(lastOpenedId) ? "open" : "";
+
+        return `
+          <details ${isOpen} data-id="${b.number}">
+            <summary>Bus #${b.number}</summary>
+            <div class="stop-info">
+              <div class="${statBoxClass}"><span>Available Seats</span><b>${b.seatnumbers}</b></div>
+              <div class="stat-box center"><span>ETA</span><b>${a}</b></div>
+              <div class="stat-box center"><span>Location</span><b>${b?.nextStop}</b></div>
+            </div>
+            <div class="path-div">
+              ${canBookAnyBus ? `<button class="popup-btn book" data-id="${b.number}">Book</button>` : ''}
+              ${hasBookingOnThisBus ? `<button class="popup-btn withdraw" data-id="${b.number}">Withdraw Booking</button>` : ''}
+              ${!canBookAnyBus && !hasBookingOnThisBus ? `<small>Already booked in #${userBookedBusId}</small>` : ''}
+            </div>
+          </details>`;
+      }).join('');
+    }
+
+    // Save "Open" state when user interacts with <details>
+    container.addEventListener('toggle', (e) => {
+      if (e.target.tagName === 'DETAILS' && e.target.open) {
+        const busId = e.target.getAttribute('data-id');
+        lastOpenedId = busId;
+        localStorage.setItem("lastopened", JSON.stringify({ lo: busId }));
+      }
+    }, true);
+
+    async function updateBusSeats(busId, increment) {
+      const busRef = ref(db, `buses/${busId}/seatnumbers`);
+      await runTransaction(busRef, (current) => {
+        if (current === null) return 0;
+        const next = current + increment;
+        return next < 0 ? 0 : next;
+      });
+    }
+
+    container.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.popup-btn');
+      if (!btn) return;
+
+      const busId = btn.getAttribute('data-id');
+
+      if (btn.classList.contains('book')) {
+        if (userBookedBusId === null) {
+          // --- Update State & LocalStorage ---
+          userBookedBusId = busId;
+          localStorage.setItem("userBookedBusId", busId);
+          
+          await updateBusSeats(busId, -1);
+        }
+      } else if (btn.classList.contains('withdraw')) {
+        if (userBookedBusId === busId) {
+          // --- Clear State & LocalStorage ---
+          userBookedBusId = null;
+          localStorage.removeItem("userBookedBusId");
+          
+          await updateBusSeats(busId, 1);
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
