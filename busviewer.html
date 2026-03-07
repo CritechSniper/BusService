@@ -54,7 +54,7 @@
     let userBookedBusId = localStorage.getItem("userBookedBusId") || null;
 
     onValue(ref(db, 'buses'), async (snapshot) => {
-      await renderBuses(); 
+      await renderBuses();
     });
 
     async function renderBuses() {
