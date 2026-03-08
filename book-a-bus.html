@@ -44,13 +44,10 @@
 
     const container = document.querySelector(".stops-container");
 
-    // --- FIX: Define and Load Persistent Data ---
     
-    // 1. Handle Last Opened Detail
     const savedState = localStorage.getItem("lastopened");
     let lastOpenedId = savedState ? JSON.parse(savedState).lo : null;
 
-    // 2. Handle User Booking (persistent across refreshes)
     let userBookedBusId = localStorage.getItem("userBookedBusId") || null;
 
     onValue(ref(db, 'buses'), async (snapshot) => {
@@ -63,7 +60,6 @@
         const isLow = b.seatnumbers <= 10;
         const statBoxClass = isLow ? "stat-box center low-seats" : "stat-box center";
         
-        // Strict comparison (ensure both are strings or both numbers)
         const hasBookingOnThisBus = String(userBookedBusId) === String(b.number);
         const canBookAnyBus = userBookedBusId === null;
 
@@ -88,7 +84,6 @@
       }).join('');
     }
 
-    // Save "Open" state when user interacts with <details>
     container.addEventListener('toggle', (e) => {
       if (e.target.tagName === 'DETAILS' && e.target.open) {
         const busId = e.target.getAttribute('data-id');
@@ -114,7 +109,6 @@
 
       if (btn.classList.contains('book')) {
         if (userBookedBusId === null) {
-          // --- Update State & LocalStorage ---
           userBookedBusId = busId;
           localStorage.setItem("userBookedBusId", busId);
           
@@ -122,7 +116,6 @@
         }
       } else if (btn.classList.contains('withdraw')) {
         if (userBookedBusId === busId) {
-          // --- Clear State & LocalStorage ---
           userBookedBusId = null;
           localStorage.removeItem("userBookedBusId");
           

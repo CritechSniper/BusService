@@ -1,7 +1,9 @@
 :root {
+  --line-clr: #2d2f3f;
   --bg-color: #0f172a;
   --card-bg: #1e293b;
   --text-main: #f8fafc;
+  --text-secondary: #c5c5c5;
   --accent-1: #38bdf8;
   --accent-2: #fbbf24;
   --accent-3: #4ade80;
@@ -139,4 +141,24 @@ body {
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
+}
+
+footer {
+  font-family:Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  border-top: 4px solid var(--line-clr);
+  padding-top: 7px;
+  padding-bottom: 7px;
+  background-color: var(--card-bg);
+  color: white;
+  text-align: center;
+  font-family: sans-serif;
+  font-weight: bold;
+  z-index: 1000;
+}
+footer a:visited {
+  color: var(--text-secondary);
 }

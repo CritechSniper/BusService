@@ -15,29 +15,14 @@
   </div>
 
   <div id="board" class="board-container">
-    <!-- Buses rendered here -->
   </div>
-  <footer
-  style="
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding-top: 7px;
-    padding-bottom: 7px;
-    background-color: #007bff;
-    color: white;
-    text-align: center;
-    font-family: sans-serif;
-    font-weight: bold;
-    z-index: 1000;
-  "
->
-  Book your next trip at 
+  <footer>
+    Book your next trip at 
     <div href="https://buservice.netlify.app/book-a-bus" 
      style="color: #ffda05; text-decoration: underline; margin-left: 5px;">
-     https://buservice.netlify.app/book-a-bus
+     <a href="https://buservice.netlify.app/book-a-bus" target="_blank">https://buservice.netlify.app/book-a-bus</a>
     </div>
-</footer>
+  </footer>
   <script type="module">
     import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -48,25 +33,19 @@
     const board = document.getElementById('board');
     let buses = [];
 
-    // 1. RENDER FUNCTION
     function renderBoard() {
         if (!board) return;
         const now = Date.now();
 
         board.innerHTML = buses.map((bus,i) => {
-            // --- PROGRESS LOGIC BASED ON ETA ---
             const etaTime = new Date(bus.eta).getTime();
             const msLeft = etaTime - now;
             
-            // We'll define a journey window (e.g., 10 minutes = 600,000ms) 
-            // to show progress from "Far Away" to "Arrived"
             const totalWindow = 600000; 
             let progress = 100 - (msLeft / totalWindow * 100);
             
-            // Clamp progress between 0 and 100
             progress = Math.min(Math.max(progress, 0), 100);
 
-            // Format the Countdown String
             let timeStr = "ARRIVED";
             if (msLeft > 0) {
                 const totalSecs = Math.floor(msLeft / 1000);
@@ -96,17 +75,14 @@
         }).join('');
     }
 
-    // 2. DATA SYNC
     onValue(ref(db, 'buses'), async () => {
         buses = await getAllBuses();
         renderBoard();
     });
 
-    // 3. THE "TICK" (Keep the line moving smoothly every second)
     setInterval(() => {
         renderBoard();
         
-        // Update the clock too
         const clock = document.getElementById('clock');
         if (clock) {
             clock.innerText = new Date().toLocaleTimeString([], {
