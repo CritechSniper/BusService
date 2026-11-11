@@ -23,27 +23,72 @@
      <a href="https://buservice.netlify.app/book-a-bus" target="_blank">https://buservice.netlify.app/book-a-bus</a>
     </div>
   </footer>
-  <script type="module">
-    import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAllBuses, firebaseConfig } from './login.js';
+    import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBTFjGPz3pPbXDqLxusue9VaQR-Msr_oTk",
+        authDomain: "justtest-5f40e.firebaseapp.com",
+        databaseURL: "https://justtest-5f40e-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "justtest-5f40e",
+        storageBucket: "justtest-5f40e.firebasestorage.app",
+        messagingSenderId: "482057327016",
+        appId: "1:482057327016:web:299970269b20d58122cd9d",
+        measurementId: "G-9V7382JDQ8"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const board = document.getElementById('board');
     let buses = [];
 
+    // Helper to generate a random future time (between 3 and 10 minutes from now)
+    function getRandomFutureTime(minMinutes = 3, maxMinutes = 10) {
+        const now = Date.now();
+        const randomMs = Math.floor(Math.random() * (maxMinutes - minMinutes + 1) + minMinutes) * 60 * 1000;
+        return new Date(now + randomMs).toISOString();
+    }
+
+    // Function to check and update expired bus ETAs safely
+    async function checkAndUpdatePastBuses(busesData) {
+        const now = Date.now();
+        const entries = Array.isArray(busesData) 
+            ? busesData.map((bus, index) => [index, bus]) 
+            : Object.entries(busesData || {});
+
+        for (const [key, bus] of entries) {
+            if (!bus) continue;
+            const etaTime = bus.eta ? new Date(bus.eta).getTime() : 0;
+            
+            // If ETA has passed or is missing, update database entry
+            if (etaTime <= now) {
+                const busRef = ref(db, `buses/${key}`);
+                await runTransaction(busRef, (currentBus) => {
+                    if (currentBus) {
+                        const currentEta = currentBus.eta ? new Date(currentBus.eta).getTime() : 0;
+                        if (currentEta <= Date.now()) {
+                            currentBus.eta = getRandomFutureTime(3, 10);
+                        }
+                    }
+                    return currentBus;
+                });
+            }
+        }
+    }
+
     function renderBoard() {
         if (!board) return;
         const now = Date.now();
 
-        board.innerHTML = buses.map((bus,i) => {
-            const etaTime = new Date(bus.eta).getTime();
+        board.innerHTML = buses.map((bus, i) => {
+            if (!bus) return '';
+            const etaTime = bus.eta ? new Date(bus.eta).getTime() : now;
             const msLeft = etaTime - now;
             
-            const totalWindow = 600000; 
+            const totalWindow = 600000; // 10-minute progress tracking window
             let progress = 100 - (msLeft / totalWindow * 100);
-            
             progress = Math.min(Math.max(progress, 0), 100);
 
             let timeStr = "ARRIVED";
@@ -53,16 +98,20 @@
                 const secs = totalSecs % 60;
                 timeStr = `${mins}m ${secs.toString().padStart(2, '0')}s`;
             }
-            const a = (new Date(bus?.eta)).toLocaleTimeString().split(" ");
-            const timyThing = `${a[0].split(":")[0]}:${a[0].split(":")[1]}${a[1] ? ` ${a[1]}` : ""}`
+
+            const etaDate = new Date(bus.eta);
+            const timeFormatted = isNaN(etaDate.getTime()) ? "--:--" : etaDate.toLocaleTimeString();
+            const a = timeFormatted.split(" ");
+            const timyThing = a[0] ? `${a[0].split(":")[0]}:${a[0].split(":")[1]}${a[1] ? ` ${a[1]}` : ""}` : "--:--";
+            console.log(bus, i)
             return `
-                <div class="bus-column ${i===0?"col-1":i===1?"col-2":"col-3"}">
+                <div class="bus-column ${i === 0 ? "col-1" : i === 1 ? "col-2" : "col-3"}">
                     <div class="busDetails">
-                        <span>BUS ${bus.number}</span>
+                        <span>BUS #${(i+1).toString().padStart(3,"0")}</span>
                     </div>
                     <div class="stop-card">
-                        <span class="stop-name">${bus?.nextStop}</span>
-                        <div class="stat-box"><span>Seats Available</span><b>${bus.seatnumbers}/${bus?.maxSeats}</b></div>
+                        <span class="stop-name">${bus.nextStop || 'N/A'}</span>
+                        <div class="stat-box"><span>Seats Available</span><b>${bus.seatnumbers ?? 0}/${bus.maxSeats ?? 0}</b></div>
                     </div>
                     <div class="arrival-footer">
                         <span><span class="pulse"></span> Arriving In</span>
@@ -75,11 +124,20 @@
         }).join('');
     }
 
-    onValue(ref(db, 'buses'), async () => {
-        buses = await getAllBuses();
+    // Realtime listener for buses node
+    onValue(ref(db, 'buses'), async (snapshot) => {
+        const rawData = snapshot.val();
+        if (rawData) {
+            await checkAndUpdatePastBuses(rawData);
+            // Re-fetch or normalize array/object seamlessly
+            buses = Array.isArray(rawData) ? rawData : Object.values(rawData);
+        } else {
+            buses = [];
+        }
         renderBoard();
     });
 
+    // 1-second interval update for clock tick and visual progress count-down
     setInterval(() => {
         renderBoard();
         
@@ -90,7 +148,6 @@
             });
         }
     }, 1000);
-
 </script>
 </body>
 </html>
