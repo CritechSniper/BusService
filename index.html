@@ -110,7 +110,7 @@
                         <span>BUS #${(i+1).toString().padStart(3,"0")}</span>
                     </div>
                     <div class="stop-card">
-                        <span class="stop-name">${bus.nextStop || 'N/A'}</span>
+                        <span class="stop-name">${bus.destination || 'N/A'}</span>
                         <div class="stat-box"><span>Seats Available</span><b>${bus.seatnumbers ?? 0}/${bus.maxSeats ?? 0}</b></div>
                     </div>
                     <div class="arrival-footer">
