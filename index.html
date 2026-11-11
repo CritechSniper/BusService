@@ -24,7 +24,7 @@
     </div>
   </footer>
 
-<script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
@@ -49,33 +49,6 @@
         const now = Date.now();
         const randomMs = Math.floor(Math.random() * (maxMinutes - minMinutes + 1) + minMinutes) * 60 * 1000;
         return new Date(now + randomMs).toISOString();
-    }
-
-    // Function to check and update expired bus ETAs safely
-    async function checkAndUpdatePastBuses(busesData) {
-        const now = Date.now();
-        const entries = Array.isArray(busesData) 
-            ? busesData.map((bus, index) => [index, bus]) 
-            : Object.entries(busesData || {});
-
-        for (const [key, bus] of entries) {
-            if (!bus) continue;
-            const etaTime = bus.eta ? new Date(bus.eta).getTime() : 0;
-            
-            // If ETA has passed or is missing, update database entry
-            if (etaTime <= now) {
-                const busRef = ref(db, `buses/${key}`);
-                await runTransaction(busRef, (currentBus) => {
-                    if (currentBus) {
-                        const currentEta = currentBus.eta ? new Date(currentBus.eta).getTime() : 0;
-                        if (currentEta <= Date.now()) {
-                            currentBus.eta = getRandomFutureTime(3, 10);
-                        }
-                    }
-                    return currentBus;
-                });
-            }
-        }
     }
 
     function renderBoard() {
@@ -103,11 +76,11 @@
             const timeFormatted = isNaN(etaDate.getTime()) ? "--:--" : etaDate.toLocaleTimeString();
             const a = timeFormatted.split(" ");
             const timyThing = a[0] ? `${a[0].split(":")[0]}:${a[0].split(":")[1]}${a[1] ? ` ${a[1]}` : ""}` : "--:--";
-            console.log(bus, i)
+
             return `
                 <div class="bus-column ${i === 0 ? "col-1" : i === 1 ? "col-2" : "col-3"}">
                     <div class="busDetails">
-                        <span>BUS #${(i+1).toString().padStart(3,"0")}</span>
+                        <span>BUS #${i.toString().padStart(3,"0")}</span>
                     </div>
                     <div class="stop-card">
                         <span class="stop-name">${bus.destination || 'N/A'}</span>
@@ -125,20 +98,36 @@
     }
 
     // Realtime listener for buses node
-    onValue(ref(db, 'buses'), async (snapshot) => {
+    onValue(ref(db, 'buses'), (snapshot) => {
         const rawData = snapshot.val();
-        if (rawData) {
-            await checkAndUpdatePastBuses(rawData);
-            // Re-fetch or normalize array/object seamlessly
-            buses = Array.isArray(rawData) ? rawData : Object.values(rawData);
-        } else {
-            buses = [];
-        }
+        buses = rawData ? (Array.isArray(rawData) ? rawData : Object.values(rawData)) : [];
         renderBoard();
     });
 
-    // 1-second interval update for clock tick and visual progress count-down
-    setInterval(() => {
+    // Every 1 second: tick down display, update clock, and check if any bus time has reached zero to reset it in Firebase
+    setInterval(async () => {
+        const now = Date.now();
+
+        for (let i = 0; i < buses.length; i++) {
+            const bus = buses[i];
+            if (bus && bus.eta) {
+                const etaTime = new Date(bus.eta).getTime();
+                // If countdown has reached or passed zero, instantly push a new random future time to Firebase
+                if (etaTime <= now) {
+                    const busRef = ref(db, `buses/${i}`);
+                    await runTransaction(busRef, (currentBus) => {
+                        if (currentBus) {
+                            const currentEta = currentBus.eta ? new Date(currentBus.eta).getTime() : 0;
+                            if (currentEta <= Date.now()) {
+                                currentBus.eta = getRandomFutureTime(3, 10);
+                            }
+                        }
+                        return currentBus;
+                    });
+                }
+            }
+        }
+
         renderBoard();
         
         const clock = document.getElementById('clock');
@@ -149,5 +138,6 @@
         }
     }, 1000);
 </script>
+
 </body>
 </html>
