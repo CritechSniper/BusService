@@ -83,7 +83,7 @@
                         <span>BUS #${i.toString().padStart(3,"0")}</span>
                     </div>
                     <div class="stop-card">
-                        <span class="stop-name">${bus.destination || 'N/A'}</span>
+                        <span class="stop-name">${bus.destination || bus.nextStop || 'N/A'}</span>
                         <div class="stat-box"><span>Seats Available</span><b>${bus.seatnumbers ?? 0}/${bus.maxSeats ?? 0}</b></div>
                     </div>
                     <div class="arrival-footer">
@@ -97,24 +97,28 @@
         }).join('');
     }
 
-    // Realtime listener for buses node
+    // Realtime listener mapping exact Firebase keys (handles objects and arrays seamlessly)
     onValue(ref(db, 'buses'), (snapshot) => {
         const rawData = snapshot.val();
-        buses = rawData ? (Array.isArray(rawData) ? rawData : Object.values(rawData)) : [];
+        if (rawData) {
+            buses = Object.entries(rawData).map(([key, val]) => {
+                return val ? { ...val, _key: key } : null;
+            }).filter(Boolean);
+        } else {
+            buses = [];
+        }
         renderBoard();
     });
 
-    // Every 1 second: tick down display, update clock, and check if any bus time has reached zero to reset it in Firebase
+    // Every 1 second: tick down display, update clock, and reset expired ETAs using their correct database _key
     setInterval(async () => {
         const now = Date.now();
 
-        for (let i = 0; i < buses.length; i++) {
-            const bus = buses[i];
-            if (bus && bus.eta) {
+        for (const bus of buses) {
+            if (bus && bus.eta && bus._key) {
                 const etaTime = new Date(bus.eta).getTime();
-                // If countdown has reached or passed zero, instantly push a new random future time to Firebase
                 if (etaTime <= now) {
-                    const busRef = ref(db, `buses/${i}`);
+                    const busRef = ref(db, `buses/${bus._key}`);
                     await runTransaction(busRef, (currentBus) => {
                         if (currentBus) {
                             const currentEta = currentBus.eta ? new Date(currentBus.eta).getTime() : 0;
