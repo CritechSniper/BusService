@@ -43,12 +43,26 @@
     const db = getDatabase(app);
     const board = document.getElementById('board');
     let buses = [];
+    const locations = [
+        "Yas Island",
+        "Qasr Al Hosn",
+        "Abu Dhabi Mall",
+        "Sheikh Zayed Grand Mosque",
+        "Burj al Arab",
+        "Pineapple building",
+        "International Indian School"
+    ];
 
     // Helper to generate a random future time (between 3 and 10 minutes from now)
     function getRandomFutureTime(minMinutes = 3, maxMinutes = 10) {
         const now = Date.now();
         const randomMs = Math.floor(Math.random() * (maxMinutes - minMinutes + 1) + minMinutes) * 60 * 1000;
         return new Date(now + randomMs).toISOString();
+    }
+
+    // Helper to get a random location from the array
+    function getRandomLocation() {
+        return locations[Math.floor(Math.random() * locations.length)];
     }
 
     function renderBoard() {
@@ -80,7 +94,7 @@
             return `
                 <div class="bus-column ${i === 0 ? "col-1" : i === 1 ? "col-2" : "col-3"}">
                     <div class="busDetails">
-                        <span>BUS #${i.toString().padStart(3,"0")}</span>
+                        <span>BUS #${(i+1).toString().padStart(3,"0")}</span>
                     </div>
                     <div class="stop-card">
                         <span class="stop-name">${bus.destination || bus.nextStop || 'N/A'}</span>
@@ -97,7 +111,7 @@
         }).join('');
     }
 
-    // Realtime listener mapping exact Firebase keys (handles objects and arrays seamlessly)
+    // Realtime listener mapping exact Firebase keys
     onValue(ref(db, 'buses'), (snapshot) => {
         const rawData = snapshot.val();
         if (rawData) {
@@ -110,7 +124,7 @@
         renderBoard();
     });
 
-    // Every 1 second: tick down display, update clock, and reset expired ETAs using their correct database _key
+    // Every 1 second: tick down display, update clock, and reset expired ETAs and locations together
     setInterval(async () => {
         const now = Date.now();
 
@@ -124,6 +138,7 @@
                             const currentEta = currentBus.eta ? new Date(currentBus.eta).getTime() : 0;
                             if (currentEta <= Date.now()) {
                                 currentBus.eta = getRandomFutureTime(3, 10);
+                                currentBus.destination = locations[Math.floor(Math.random() * locations.length)];
                             }
                         }
                         return currentBus;
@@ -141,7 +156,7 @@
             });
         }
     }, 1000);
-</script>
+  </script>
 
 </body>
 </html>
